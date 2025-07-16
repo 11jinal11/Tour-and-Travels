@@ -30,69 +30,53 @@ export default function Itinerary() {
     dayDescription: '',
   });
 
-  const token = 'qMOWm3sCXpZ3W8zM';
+ const token = localStorage.getItem('token');
 
   useEffect(() => {
     loadItineraries();
     loadDestinations();
   }, []);
 
-  // Load itineraries from API
   const loadItineraries = () => {
     axios
       .get('https://generateapi.onrender.com/api/Itinerary', {
         headers: { Authorization: token },
       })
-      .then((res) => {
-        if (res.data.data && Array.isArray(res.data.data)) {
-          setItineraryList(res.data.data);
-        } else {
-          setItineraryList([]);
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching itineraries:', error.response?.data || error.message);
-      });
+      .then((res) => setItineraryList(res.data.Data))
+      .catch(console.error);
   };
 
-  // Load destination list from API
   const loadDestinations = () => {
     axios
       .get('https://generateapi.onrender.com/api/destinationadd', {
         headers: { Authorization: token },
       })
-      .then((res) => {
-        setDestinationList(res.data.Data || []);
-      })
-      .catch((error) => {
-        console.error('Error fetching destinations:', error.response?.data || error.message);
-      });
+      .then((res) => setDestinationList(res.data.Data))
+      .catch(console.error);
   };
 
-  // Handle form submission for add or update
   const handleSubmit = (values, { resetForm }) => {
     const payload = {
-      destinationId: values.destinationId, // string ID expected here
-      days: [
-        {
-          destinationName: values.destinationName,
-          dayDescription: values.dayDescription,
-        },
-      ],
+      destinationId: values.destinationId,
+      destinationName: values.destinationName,
+      dayDescription: values.dayDescription
     };
+    console.log("payloa==>", payload);
 
     const request = editingItineraryId
       ? axios.patch(
-          `https://generateapi.onrender.com/api/Itinerary/${editingItineraryId}`,
-          payload,
-          { headers: { Authorization: token } }
-        )
+        `https://generateapi.onrender.com/api/Itinerary/${editingItineraryId}`,
+        payload,
+        { headers: { Authorization: token } }
+      )
       : axios.post('https://generateapi.onrender.com/api/Itinerary', payload, {
-          headers: { Authorization: token },
-        });
+        headers: { Authorization: token },
+      });
 
     request
       .then(() => {
+        console.log("success");
+
         loadItineraries();
         resetForm();
         setEditingItineraryId(null);
@@ -103,18 +87,16 @@ export default function Itinerary() {
       });
   };
 
-  // Fill form for editing existing itinerary
   const editData = (itineraryId, row) => {
     setEditingItineraryId(itineraryId);
-    const dayObj = row.days?.[0] || {};
     setIni({
-      destinationId: row.destinationId?._id || '',
-      destinationName: dayObj.destinationName || '',
-      dayDescription: dayObj.dayDescription || '',
+      destinationId: row.destinationId === 'string' ? row.destinationId : row.destinationId?._id || '',
+      destinationName: row.destinationName || '',
+      dayDescription: row.dayDescription || '',
     });
   };
 
-  // Delete itinerary by id
+
   const handleDeleteItinerary = (itineraryId) => {
     axios
       .delete(`https://generateapi.onrender.com/api/Itinerary/${itineraryId}`, {
@@ -130,28 +112,17 @@ export default function Itinerary() {
 
   return (
     <AdminLayout>
-      <Box
-        sx={{
-          background: '#0d1f2d',
-          color: '#fff',
-          p: 3,
-          borderRadius: 3,
-          maxWidth: '1000px',
-          margin: 'auto',
-          mt: 4,
-        }}
-      >
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-          🗽️ Add Itinerary
-        </Typography>
+      <Box sx={{ background: '#0d1f2d', color: '#fff', p: 3, borderRadius: 3, maxWidth: '1000px', margin: 'auto', mt: 4 }}>
+        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>🗽️ Add Itinerary</Typography>
 
         <Paper variant="outlined" sx={{ backgroundColor: '#122c3a', p: 3, borderRadius: 2 }}>
           <Formik initialValues={ini} enableReinitialize onSubmit={handleSubmit}>
             {({ values, handleChange }) => (
               <Form>
                 <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Destination</InputLabel>
+                     <InputLabel  sx={{ color: '#bbb' }}>Destination</InputLabel>
                   <Select
+                  sx={{color:'white'}}
                     name="destinationId"
                     label="Destination"
                     value={values.destinationId}
@@ -173,8 +144,8 @@ export default function Itinerary() {
                   variant="filled"
                   value={values.destinationName}
                   onChange={handleChange}
-                  sx={{ mb: 2 }}
-                  InputProps={{ style: { backgroundColor: '#1e3a4c', color: '#fff' } }}
+                  sx={{ mb: 2 ,color: 'white'}}
+                  InputProps={{ style: { backgroundColor: '#1e3a4c',  } }}
                   InputLabelProps={{ style: { color: '#ccc' } }}
                   required
                 />
@@ -206,28 +177,15 @@ export default function Itinerary() {
           </Formik>
         </Paper>
 
-        <TableContainer
-          component={Paper}
-          sx={{
-            mt: 4,
-            borderRadius: 3,
-            backgroundColor: '#0f2027',
-            border: '1px solid #2c5364',
-          }}
-        >
+        <TableContainer component={Paper} sx={{ mt: 4, borderRadius: 3, backgroundColor: '#0f2027', border: '1px solid #2c5364' }}>
           <Table sx={{ minWidth: 650 }} aria-label="itinerary table">
             <TableHead>
               <TableRow>
-                {['Destination', 'Day Info', 'Update', 'Delete'].map((head) => (
+                {['Destination Id', 'Day Destination', 'Day Info', 'Update', 'Delete'].map((head) => (
                   <TableCell
                     key={head}
                     align="center"
-                    sx={{
-                      color: '#E0E0E0',
-                      fontWeight: 'bold',
-                      fontSize: '16px',
-                      borderBottom: '1px solid #2c5364',
-                    }}
+                    sx={{ color: '#E0E0E0', fontWeight: 'bold', fontSize: '16px', borderBottom: '1px solid #2c5364' }}
                   >
                     {head}
                   </TableCell>
@@ -237,40 +195,24 @@ export default function Itinerary() {
 
             <TableBody>
               {Array.isArray(itineraryList) && itineraryList.length > 0 ? (
-                itineraryList.map((row) => (
-                  <TableRow
-                    key={row._id}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: '#203a43',
-                      },
-                    }}
-                  >
-                    <TableCell align="center" sx={{ color: '#E0E0E0', fontSize: '15px' }}>
-                      {/* Destination Name from destinationId object */}
-                      {row.destinationId?.destination || 'Unknown'}
+                itineraryList.map((row) => (             
+                  <TableRow key={row._id} sx={{ '&:hover': { backgroundColor: '#203a43' } }}>
+                    <TableCell align="center" sx={{ color: '#E0E0E0' }}>                   
+                        { row.destinationId.destination}                     
                     </TableCell>
-                    <TableCell align="center" sx={{ color: '#E0E0E0', fontSize: '15px' }}>
-                      {row.days?.[0]
-                        ? `${row.days[0].destinationName}: ${row.days[0].dayDescription}`
-                        : 'No Day Info'}
+
+                    <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                      {row.destinationName }                     
+                    </TableCell>
+                    <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                      {row.dayDescription      }                
                     </TableCell>
 
                     <TableCell align="center">
                       <Button
                         variant="outlined"
                         size="small"
-                        sx={{
-                          color: '#90caf9',
-                          borderColor: '#90caf9',
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontWeight: 'bold',
-                          '&:hover': {
-                            backgroundColor: '#90caf922',
-                            borderColor: '#90caf9',
-                          },
-                        }}
+                        sx={{ color: '#90caf9', borderColor: '#90caf9', borderRadius: 2, fontWeight: 'bold' }}
                         onClick={() => editData(row._id, row)}
                       >
                         Update
@@ -280,23 +222,14 @@ export default function Itinerary() {
                       <Button
                         variant="outlined"
                         size="small"
-                        sx={{
-                          color: '#ef5350',
-                          borderColor: '#ef5350',
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontWeight: 'bold',
-                          '&:hover': {
-                            backgroundColor: '#ef535022',
-                            borderColor: '#ef5350',
-                          },
-                        }}
+                        sx={{ color: '#ef5350', borderColor: '#ef5350', borderRadius: 2, fontWeight: 'bold' }}
                         onClick={() => handleDeleteItinerary(row._id)}
                       >
                         Delete
                       </Button>
                     </TableCell>
                   </TableRow>
+
                 ))
               ) : (
                 <TableRow>

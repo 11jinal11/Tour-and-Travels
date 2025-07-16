@@ -24,56 +24,57 @@ import { Formik, Form, Field } from 'formik';
 import axios from 'axios';
 
 export default function Highlights() {
+  const [list, setList] = useState([]);
+  const [edithighlighthId, setEditHighlighthId] = useState(null);
+  const [destinationList, setDestinationList] = useState([]);
   const [ini, setIni] = useState({
     destinationId: '',
     sightseeingIncluded: '',
     packageIncludes: '',
+    packageExcludes:""
   });
 
-  const [list, setList] = useState([]);
-  const [edithighlighthId, setEditHighlighthId] = useState(null);
-  const [destinationList, setDestinationList] = useState([]);
+   const token = localStorage.getItem('token');
 
-  const token =  'qMOWm3sCXpZ3W8zM';
-
-  useEffect(() => {
-    dataView();
-    fetchDestinations();
-  }, []);
+    useEffect(() => {
+      dataView();
+      fetchDestinations();
+    }, []);
 
   const handleSubmit = (values, { resetForm }) => {
     const payload = {
       destinationId: values.destinationId,
-      sightseeingIncluded: [values.sightseeingIncluded],
-      packageIncludes: [values.packageIncludes],
-      packageExcludes:[values.packageExcludes]
+      sightseeingIncluded: values.sightseeingIncluded,
+      packageIncludes: values.packageIncludes,
+      packageExcludes: values.packageExcludes
     };
-
     const request = edithighlighthId
       ? axios.patch(`https://generateapi.onrender.com/api/Highlights/${edithighlighthId}`, payload, {
-          headers: { Authorization: token },
-        })
+        headers: { Authorization: token },
+      })
       : axios.post('https://generateapi.onrender.com/api/Highlights', payload, {
-          headers: { Authorization: token },
-        });
+        headers: { Authorization: token },
+      });
 
     request
       .then(() => {
         dataView();
         resetForm();
-        setIni({ destinationId: '', sightseeingIncluded: '', packageIncludes: '',packageExcludes:'' });
+        setIni({ destinationId: '', sightseeingIncluded: '', packageIncludes: '', packageExcludes: '' });
         setEditHighlighthId(null);
       })
       .catch(console.error);
   };
 
   const editData = (highlightId, row) => {
+    console.log("Editing:", row);
     setEditHighlighthId(highlightId);
+    console.log("Edit ID:", edithighlighthId);
     setIni({
-      destinationId: row.destinationId?._id || '',
-      sightseeingIncluded: row.sightseeingIncluded[0] || '',
-      packageIncludes: row.packageIncludes[0] || '',
-      packageExcludes: row.packageExcludes[0] || '',
+      destinationId: row.destinationId?._id || row.destinationId || '',
+      sightseeingIncluded: row.sightseeingIncluded || '',
+      packageIncludes: row.packageIncludes || '',
+      packageExcludes: row.packageExcludes || '',
     });
   };
 
@@ -82,7 +83,7 @@ export default function Highlights() {
       .get('https://generateapi.onrender.com/api/Highlights', {
         headers: { Authorization: token },
       })
-      .then((res) => setList(res.data.data))
+      .then((res) => setList(res.data.Data))
       .catch(console.error);
   };
 
@@ -123,15 +124,16 @@ export default function Highlights() {
 
         <Paper variant="outlined" sx={{ backgroundColor: '#122c3a', p: 3, borderRadius: 2 }}>
           <Formik enableReinitialize initialValues={ini} onSubmit={handleSubmit}>
-            {({ values, handleChange }) => (
+            {({ setFieldValue, values, handleChange }) => (
               <Form>
                 <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Destination</InputLabel>
+                    <InputLabel  sx={{ color: '#bbb' }}>Destination</InputLabel>
                   <Select
                     name="destinationId"
                     label="Destination"
                     value={values.destinationId}
                     onChange={handleChange}
+                    sx={{color:"#fff"}}
                   >
                     {destinationList.map((dest) => (
                       <MenuItem key={dest._id} value={dest._id}>
@@ -174,7 +176,7 @@ export default function Highlights() {
                     </IconButton>
                   </Stack>
 
- <Typography variant="h6">Package Excludes</Typography>
+                  <Typography variant="h6">Package Excludes</Typography>
                   <Stack direction="row" spacing={1}>
                     <Field
                       as={TextField}
@@ -216,7 +218,7 @@ export default function Highlights() {
         <Table sx={{ minWidth: 650 }} aria-label="destination table">
           <TableHead>
             <TableRow>
-              {['Destination', 'Sightseeing Included', 'Package Includes', 'Update', 'Delete'].map(
+              {['Destination', 'Sightseeing Included', 'Package Includes', 'PackageExcludes', 'Update', 'Delete'].map(
                 (head) => (
                   <TableCell
                     key={head}
@@ -239,13 +241,16 @@ export default function Highlights() {
               list.map((row) => (
                 <TableRow key={row._id} sx={{ '&:hover': { backgroundColor: '#203a43' } }}>
                   <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                    {row.destinationId?.destination || 'N/A'}
+                    {row.destinationId.destination}
                   </TableCell>
                   <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                    {(row.sightseeingIncluded || []).join(', ')}
+                    {row.sightseeingIncluded}
                   </TableCell>
                   <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                    {(row.packageIncludes || []).join(', ')}
+                    {row.packageIncludes}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.packageExcludes}
                   </TableCell>
                   <TableCell align="center">
                     <Button

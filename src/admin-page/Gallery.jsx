@@ -1,227 +1,226 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
+  Box, Paper, Typography, FormControl, InputLabel, Select,
+  MenuItem, Button, Grid, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow
 } from '@mui/material';
-import { AddPhotoAlternate, Delete } from '@mui/icons-material';
+import { Formik, Form } from 'formik';
+import axios from 'axios';
 import AdminLayout from '../admin-layout/AdminLayout';
 
-export default function Gallery() {
-  const [list, setList] = useState([]);
-  const [selectedImages, setSelectedImages] = useState([]);
+const Gallery = () => {
+  const [destinationList, setDestinationList] = useState([]);
+  const [galleryList, setGalleryList] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [initialValues, setInitialValues] = useState({
+    destinationid: '',
+    images: [],
+  });
+  const [previewUrls, setPreviewUrls] = useState([]);
 
-  const handleImageUpload = (event) => {
-    const files = Array.from(event.target.files);
-    const imageUrls = files.map((file) => URL.createObjectURL(file));
-    setSelectedImages((prev) => [...prev, ...imageUrls]);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchDestinations();
+    fetchGallery();
+  }, []);
+
+  useEffect(() => {
+    // Clean up preview URLs when images change
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  const fetchDestinations = () => {
+    axios.get('https://generateapi.onrender.com/api/destinationadd', {
+      headers: { Authorization: token },
+    })
+    .then(res => setDestinationList(res.data.Data))
+    .catch(console.error);
   };
 
-  const handleImageDelete = (index) => {
-    const updatedImages = [...selectedImages];
-    updatedImages.splice(index, 1);
-    setSelectedImages(updatedImages);
+  const fetchGallery = () => {
+    axios.get('https://generateapi.onrender.com/api/Gallery', {
+      headers: { Authorization: token },
+    })
+    .then(res => setGalleryList(res.data.Data))
+    .catch(console.error);
+  };
+
+  const handleSubmit = (values, { resetForm }) => {
+    const formData = new FormData();
+    formData.append('destinationid', values.destinationid);
+    values.images.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    const url = editId
+      ? `https://generateapi.onrender.com/api/Gallery/${editId}`
+      : 'https://generateapi.onrender.com/api/Gallery';
+
+    const method = editId ? 'patch' : 'post';
+
+    axios[method](url, formData, {
+      headers: {
+        Authorization: token,
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(() => {
+      fetchGallery();
+      resetForm();
+      setEditId(null);
+      setInitialValues({ destinationid: '', images: [] });
+      setPreviewUrls([]); // Clear previews
+    })
+    .catch(console.error);
+  };
+
+  const handleEdit = (item) => {
+    setEditId(item._id);
+    setInitialValues({
+      destinationid: item.destinationid?._id || item.destinationid || '',
+      images: [],
+    });
+    setPreviewUrls([]); // Clear previous previews
+  };
+
+  const handleDelete = (id) => {
+    axios.delete(`https://generateapi.onrender.com/api/Gallery/${id}`, {
+      headers: { Authorization: token },
+    })
+    .then(() => fetchGallery())
+    .catch(console.error);
   };
 
   return (
     <AdminLayout>
-      <Box
-        sx={{
-          background: '#0d1f2d',
-          color: '#fff',
-          p: 3,
-          borderRadius: 3,
-          maxWidth: '1000px',
-          margin: 'auto',
-          mt: 4,
-        }}
-      >
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-          🖼️ Add Gallery Photos
-        </Typography>
+      <Box sx={{ bgcolor: '#0d1f2d', minHeight: '100vh', py: 5 }}>
+        <Paper sx={{ maxWidth: 700, m: 'auto', p: 4, bgcolor: '#1e3a4c', color: '#fff' }}>
+          <Typography variant="h5" gutterBottom>🖼️ Gallery Management</Typography>
 
-        <Paper
-          variant="outlined"
-          sx={{
-            backgroundColor: '#122c3a',
-            p: 3,
-            borderRadius: 2,
-            textAlign: 'center',
-          }}
-        >
-          {/* Upload Button */}
-          <Button
-            component="label"
-            variant="contained"
-            startIcon={<AddPhotoAlternate />}
-            sx={{ bgcolor: '#0288d1', mb: 2 }}
-          >
-            Upload Photos
-            <input
-              type="file"
-              hidden
-              multiple
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </Button>
+          <Formik enableReinitialize initialValues={initialValues} onSubmit={handleSubmit}>
+            {({ values, handleChange, setFieldValue }) => (
+              <Form>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel sx={{ color: '#bbb' }}>Destination</InputLabel>
+                  <Select
+                    name="destinationid"
+                    value={values.destinationid}
+                    onChange={handleChange}
+                     sx={{color:'#fff'}}               >
+                    {destinationList.map((dest) => (
+                      <MenuItem key={dest._id} value={dest._id}>
+                        {dest.destination}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-          {/* Image Preview Grid */}
-          <Grid container spacing={2} justifyContent="center">
-            {selectedImages.map((src, index) => (
-              <Grid item xs={4} key={index}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    border: '2px solid #1e3a4c',
-                  }}
-                >
-                  <img
-                    src={src}
-                    alt={`Gallery ${index + 1}`}
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                  />
-                  <IconButton
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      bgcolor: '#f44336',
-                      color: '#fff',
-                      '&:hover': { bgcolor: '#d32f2f' },
+                <InputLabel sx={{ color: '#ccc', mb: 1 }}>Upload Images</InputLabel>
+                <Button variant="contained" component="label" sx={{ mb: 2 }}>
+                  Select Images
+                  <input
+                    type="file"
+                    name="images"
+                    multiple
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      setFieldValue('images', files);
+
+                      // Generate previews
+                      const urls = files.map((file) => URL.createObjectURL(file));
+                      setPreviewUrls(urls);
                     }}
-                    size="small"
-                    onClick={() => handleImageDelete(index)}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+                  />
+                </Button>
+
+                <Grid container spacing={1} mb={2}>
+                  {previewUrls.map((url, i) => (
+                    <Grid item key={i}>
+                      <img
+                        src={url}
+                        alt={`preview-${i}`}
+                        style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 4 }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Button type="submit" variant="contained" color="primary">
+                  {editId ? 'Update' : 'Submit'}
+                </Button>
+              </Form>
+            )}
+          </Formik>
         </Paper>
 
-        {/* Save Button */}
-        <Button
-          variant="contained"
-          sx={{
-            mt: 4,
-            bgcolor: '#4caf50',
-            color: '#fff',
-            fontWeight: 'bold',
-            px: 4,
-          }}
-        >
-          SAVE GALLERY
-        </Button>
-      </Box>
-
-      {/* Gallery Table */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          mt: 4,
-          borderRadius: 3,
-          backgroundColor: '#0f2027',
-          border: '1px solid #2c5364',
-        }}
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="gallery table">
-          <TableHead>
-            <TableRow>
-              {['Gallery', 'Update', 'Delete'].map((head) => (
-                <TableCell
-                  key={head}
-                  align="center"
-                  sx={{
-                    color: '#E0E0E0',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    borderBottom: '1px solid #2c5364',
-                  }}
-                >
-                  {head}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {Array.isArray(list) && list.length > 0 ? (
-              list.map((row) => (
-                <TableRow
-                  key={row._id}
-                  sx={{
-                    '&:hover': {
-                      backgroundColor: '#203a43',
-                    },
-                  }}
-                >
+        <TableContainer component={Paper} sx={{ mt: 4, backgroundColor: '#102027' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Country Name', 'Images', 'Update', 'Delete'].map((head) => (
+                  <TableCell
+                    key={head}
+                    align="center"
+                    sx={{
+                      color: '#E0E0E0',
+                      fontWeight: 'bold',
+                      fontSize: '16px',
+                      borderBottom: '1px solid #2c5364',
+                    }}
+                  >
+                    {head}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {galleryList.map((item) => (
+                <TableRow key={item._id}>
                   <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                    {row.destination}
+                    {item.destinationid?.destination}
                   </TableCell>
                   <TableCell align="center">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        color: '#90caf9',
-                        borderColor: '#90caf9',
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        '&:hover': {
-                          backgroundColor: '#90caf922',
-                          borderColor: '#90caf9',
-                        },
-                      }}
-                    >
-                      Update
-                    </Button>
+                    {Array.isArray(item.images) && item.images.length > 0 ? (
+                      item.images.map((img, index) => (
+                        <img
+                          key={index}
+                          src={img}
+                          alt={`gallery-${index}`}
+                          style={{ width: 60, height: 45, marginRight: 4, borderRadius: 4 }}
+                        />
+                      ))
+                    ) : (
+                      'No image'
+                    )}
                   </TableCell>
                   <TableCell align="center">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        color: '#ef5350',
-                        borderColor: '#ef5350',
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        '&:hover': {
-                          backgroundColor: '#ef535022',
-                          borderColor: '#ef5350',
-                        },
-                      }}
-                      // onClick={() => deleteData(row.id)}
-                    >
+                    <Button variant="outlined" onClick={() => handleEdit(item)}>Update</Button>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button variant="outlined" color="error" onClick={() => handleDelete(item._id)}>
                       Delete
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} align="center" sx={{ color: '#ccc', py: 5 }}>
-                  No gallery items available
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+              {galleryList.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ color: '#ccc' }}>
+                    No gallery data available.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </AdminLayout>
   );
-}
+};
+
+export default Gallery;

@@ -73,7 +73,7 @@ const Footer = () => {
             <Stack spacing={1}>
             
               <Typography sx={{ lineHeight:'3' }}variant="body2">24 Hours Service</Typography>
-              <Typography sx={{ lineHeight:'3' }}variant="body2">+88 01526-283903</Typography>
+              <Typography sx={{ lineHeight:'3' }}variant="body2">+91 88499-20736</Typography>
              
             </Stack>
           </Grid>
@@ -93,10 +93,10 @@ const Footer = () => {
                 mr: 1,
               }}
             ></Box>
-            TravelTime®
+           WonderlustTravelTime®
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7 }}>
-          © 2025 All rights reserved. Bout India Tours Private Limited
+          © 2025 All rights reserved. Wonderlust Travel Tours Private Limited
           </Typography>
         </Box>
       </Container>

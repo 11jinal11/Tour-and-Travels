@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField,
@@ -19,13 +18,12 @@ const Visa = () => {
   const [destinationList, setDestinationList] = useState([]);
   const [visaList, setVisaList] = useState([]);
   const [editVisaId, setEditVisaId] = useState(null);
-
-  const [ini, setIni] = useState({
+ const [ini, setIni] = useState({
     destinationId: '',
     visaDetail: '',
   });
 
-  const token = 'your-token-here';
+  const token = 'qMOWm3sCXpZ3W8zM';
 
   useEffect(() => {
     fetchVisaData();
@@ -35,16 +33,16 @@ const Visa = () => {
   const handleSubmit = (values, { resetForm }) => {
     const payload = {
       destinationId: values.destinationId,
-      visaDetail: values.visaDetail, // 👈 string, not array
+      visaDetail: values.visaDetail,
     };
 
     const request = editVisaId
-      ? axios.patch(`https://travel-planning-wgkf.onrender.com/visa/update/${editVisaId}`, payload, {
-          headers: { Authorization: token },
-        })
-      : axios.post('https://travel-planning-wgkf.onrender.com/visa/create', payload, {
-          headers: { Authorization: token },
-        });
+      ? axios.patch(`https://generateapi.onrender.com/api/Visa/${editVisaId}`, payload, {
+        headers: { Authorization: token },
+      })
+      : axios.post('https://generateapi.onrender.com/api/Visa', payload, {
+        headers: { Authorization: token },
+      });
 
     request
       .then(() => {
@@ -59,37 +57,39 @@ const Visa = () => {
   const editData = (visaId, row) => {
     setEditVisaId(visaId);
     setIni({
-      destinationId: row.destinationId?._id || '',
+      destinationId: row.destinationId?._id || row.destinationId || '',
       visaDetail: row.visaDetail || '',
     });
   };
 
   const fetchVisaData = () => {
     axios
-      .get('https://travel-planning-wgkf.onrender.com/visa/find', {
+      .get('https://generateapi.onrender.com/api/Visa', {
         headers: { Authorization: token },
       })
-      .then((res) => setVisaList(res.data.data))
+      .then((res) => setVisaList(res.data.Data))
       .catch(console.error);
   };
 
   const fetchDestinations = () => {
     axios
-      .get('https://travel-planning-wgkf.onrender.com/destination/find', {
+      .get('https://generateapi.onrender.com/api/destinationadd', {
         headers: { Authorization: token },
       })
-      .then((res) => setDestinationList(res.data.data))
+      .then((res) => setDestinationList(res.data.Data))
       .catch(console.error);
   };
 
   const handleDeleteVisa = (visaId) => {
     axios
-      .delete(`https://travel-planning-wgkf.onrender.com/visa/delete/${visaId}`, {
+      .delete(`https://generateapi.onrender.com/api/Visa/${visaId}`, {
         headers: { Authorization: token },
       })
       .then(() => fetchVisaData())
       .catch(console.error);
   };
+
+
 
   return (
     <AdminLayout>
@@ -105,19 +105,17 @@ const Visa = () => {
             borderRadius: 3,
           }}
         >
-          <Typography variant="h5" gutterBottom>
-            🛂 Visa Description
-          </Typography>
-
+          <Typography variant="h5" gutterBottom>  🛂 Visa Description  </Typography>              
           <Formik
             enableReinitialize
             initialValues={ini}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit}  
           >
+            
             {({ values, handleChange }) => (
               <Form>
                 <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel sx={{ color: '#fff' }}>Destination</InputLabel>
+                  <InputLabel sx={{ color: '#bbb' }}>Destination</InputLabel>
                   <Select
                     name="destinationId"
                     label="Country Name"
@@ -141,10 +139,9 @@ const Visa = () => {
                   rows={6}
                   fullWidth
                   sx={{ my: 2 }}
-                  InputLabelProps={{ style: { color: '#fff' } }}
+                  InputLabelProps={{ style: { color: '#bbb' } }}
                   InputProps={{ style: { color: '#fff' } }}
                 />
-
                 <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
                   {editVisaId ? 'Update' : 'Save'}
                 </Button>
@@ -187,12 +184,13 @@ const Visa = () => {
             {Array.isArray(visaList) && visaList.length > 0 ? (
               visaList.map((row) => (
                 <TableRow key={row._id} sx={{ '&:hover': { backgroundColor: '#203a43' } }}>
-                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                    {row.destinationId?.destination || 'N/A'}
+                  <TableCell align="center" sx={{ color: '#fff' }}>
+                    {destinationList.find(dest => dest._id === row.destinationId)?.destination || 'Unknown'}
                   </TableCell>
                   <TableCell align="center" sx={{ color: '#E0E0E0' }}>
                     {row.visaDetail}
                   </TableCell>
+                  
                   <TableCell align="center">
                     <Button
                       variant="outlined"
@@ -212,6 +210,7 @@ const Visa = () => {
                       Update
                     </Button>
                   </TableCell>
+
                   <TableCell align="center">
                     <Button
                       variant="outlined"

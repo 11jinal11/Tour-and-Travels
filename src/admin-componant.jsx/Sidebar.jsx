@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, IconButton, Box, CssBaseline, AppBar, Typography } from '@mui/material';
 import { Dashboard, Explore, EventNote, Collections, Menu as MenuIcon } from '@mui/icons-material';
@@ -15,10 +14,13 @@ const navItems = [
   { name: 'Itinerary', path: '/itinerary', icon: <EventNote /> },
   { name: 'Gallery', path: '/gallery', icon: <Collections /> },
   { name: 'Tips', path: '/tips', icon: <Collections /> },
-  { name: 'Visa', path: '/visa', icon: <Collections /> },
+  { name: 'Visa', path: '/adminvisa', icon: <Collections /> },
+   { name: 'Free Consult List', path: '/freeConsultList', icon: <Collections /> },
+   { name: 'Booking list', path: '/bookinglist', icon: <Collections /> },
 ];
 
 const Sidebar = ({ children }) => {
+  
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -124,7 +126,7 @@ const Sidebar = ({ children }) => {
         </Drawer>
       </Box>
 
-      {/* Main Content */}
+
      
     </Box>
   );

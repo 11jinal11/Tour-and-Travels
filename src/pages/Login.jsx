@@ -33,6 +33,9 @@ const token ='qMOWm3sCXpZ3W8zM'
      
       .then(() => {
         history.push('/dashboard');
+
+        localStorage.setItem('token' , token)
+
         console.log('success');
       })
       .catch((err) => {

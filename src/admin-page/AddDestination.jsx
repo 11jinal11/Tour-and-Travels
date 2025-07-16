@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -11,7 +10,6 @@ import {
 } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import axios from 'axios';
-
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -21,13 +19,16 @@ import TableRow from '@mui/material/TableRow';
 import AdminLayout from '../admin-layout/AdminLayout';
 
 const AddDestination = () => {
+  const [imagePreview, setImagePreview] = useState(null);
+  const [list, setList] = useState([]);
+  const [editId, setEditId] = useState(null);
   const [ini, setIni] = useState({
     destination: '',
     packagePrice: '',
-    Images: null,
+    Images: null, 
   });
-  const [list, setList] = useState([]);
-  const [editId, setEditId] = useState(null);
+
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     dataView();
@@ -42,8 +43,8 @@ const AddDestination = () => {
     });
 
     const headers = {
-      Authorization:
-        'qMOWm3sCXpZ3W8zM',
+      Authorization:token
+       
     };
 
     const url = editId
@@ -56,9 +57,11 @@ const AddDestination = () => {
       .then(() => {
         dataView();
         setEditId(null);
-        setIni({  destination: '',
-    packagePrice: '',
-    Images: null,});
+        setIni({
+          destination: '',
+          packagePrice: '',
+          Images: null,
+        });
         resetForm();
       })
       .catch((error) => {
@@ -66,35 +69,38 @@ const AddDestination = () => {
       });
   };
 
-
   const deleteData = (id) => {
     axios
       .delete(`https://generateapi.onrender.com/api/destinationadd/${id}`, {
         headers: {
           Authorization:
-            'qMOWm3sCXpZ3W8zM'   },
+            'qMOWm3sCXpZ3W8zM'
+        },
       })
       .then(dataView)
       .catch(console.log);
   };
 
   const editData = (id, row) => {
-    setIni({ ...row }); // Set the row data for editing, including image URL
+    console.log('data=====', id);
+    setIni({
+      destination: row.destination,
+      packagePrice: row.packagePrice,
+      Images: null,
+    }); // Set the row data for editing, including image URL
     setEditId(id); // Track the ID of the record being edited
+    setImagePreview(row.Images);
   };
 
   const dataView = () => {
- 
-    
     axios
       .get('https://generateapi.onrender.com/api/destinationadd', {
         headers: {
-          Authorization:
-            'qMOWm3sCXpZ3W8zM',
+          Authorization:token
         },
       })
       .then((res) => {
-         console.log('Destination list:', res.data);
+        console.log('Destination list:', res.data);
         setList(res.data.Data || []);
       })
       .catch(console.log);
@@ -144,17 +150,39 @@ const AddDestination = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
-                    <InputLabel sx={{ color: '#ccc', mb: 1 }}>Upload Image</InputLabel>
-                    <input
-                      type="file"
-                      name="Images"
-                      accept="image/*"
-                      onChange={(e) => {
-                        setFieldValue('Images', e.target.files[0]);
-                      }}
-                    />
-                  </Grid>
+                 <InputLabel sx={{ color: '#ccc', mb: 1 }}>Upload Image</InputLabel>
+<Button variant="contained" component="label" sx={{ bgcolor: '#0288d1' }}>
+  Upload Image
+  <input
+    type="file"
+    name="Images"
+    accept="image/*"
+    hidden
+    onChange={(e) => {
+      const file = e.target.files[0];
+      setFieldValue('Images', file);
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }}
+  />
+</Button>
+
+{imagePreview && (
+  <Box mt={2}>
+    <img
+      src={imagePreview}
+      alt="Preview"
+      style={{ width: '100%', maxWidth: 300, borderRadius: 8 }}
+    />
+  </Box>
+)}
+
 
                   <Grid item xs={12}>
                     <Button type="submit" variant="contained" color="success" size="large">
@@ -203,7 +231,8 @@ const AddDestination = () => {
                       {row.destination}
                     </TableCell>
                     <TableCell align="center" sx={{ color: '#E0E0E0' }}>
-                      ₹{row.packagePrice}
+                      {/* ₹ */}
+                     $ {row.packagePrice}
                     </TableCell>
                     <TableCell align="center">
                       {row.Images ? (
@@ -266,3 +295,5 @@ const AddDestination = () => {
 };
 
 export default AddDestination;
+
+

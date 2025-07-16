@@ -1,33 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
+  FormControl,
   Typography,
   TextField,
   Grid,
   Button,
   Paper,
-  InputAdornment,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  InputLabel, Select,
+  MenuItem,
 } from '@mui/material';
-import {
-  CloudUpload,
-  WbSunny,
-  AcUnit,
-  Opacity,
-  EmojiNature,
-} from '@mui/icons-material';
-import { Formik, Form } from 'formik';
+import axios from 'axios';
+import {  CloudUpload,} from '@mui/icons-material';
+import { Formik, Form, Field } from 'formik';
 import AdminLayout from '../admin-layout/AdminLayout';
 
 export default function Tips() {
-  const [list, setList] = useState([]);
+  const [tipsList, setTipsList] = useState([]);
+  const [destinationList, setDestinationList] = useState([]);
+  const [editTipsId, setEditTipsId] = useState(null);
+
+  const [ini, setIni] = useState({
+    destinationid: '',
+    springTemp: '',
+    summarTemp: '',
+    autumnTemp: '',
+    winterTemp: '',
+    currency: '',
+    timeDifference: '',
+    bestTimetoVisit: '',
+    image: [],
+  });
+
+ const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchTipsData();
+    fetchDestinations();
+  }, []);
+
+  const handleSubmit = (values, { resetForm }) => {
+    const formData = new FormData();
+    for (const key in values) {
+      if (key === 'image') {
+        values.image.forEach((file) => formData.append('image', file));
+      } else {
+        formData.append(key, values[key]);
+      }
+    }
+
+    const api = 'https://generateapi.onrender.com/api/tiPS';
+    const request = editTipsId
+      ? axios.patch(`${api}/${editTipsId}`, formData, {
+        headers: { Authorization: token },
+      })
+      : axios.post(api, formData, {
+        headers: { Authorization: token },
+      });
+
+    request
+      .then(() => {
+        fetchTipsData();
+        resetForm();
+        setIni({
+          destinationid: '',
+          springTemp: '',
+          summarTemp: '',
+          autumnTemp: '',
+          winterTemp: '',
+          currency: '',
+          timeDifference: '',
+          bestTimetoVisit: '',
+          image: [],
+        });
+        setEditTipsId(null);
+      })
+      .catch(console.error);
+  };
+
+  const fetchDestinations = () => {
+    axios
+      .get('https://generateapi.onrender.com/api/destinationadd', {
+        headers: { Authorization: token },
+      })
+      .then((res) => setDestinationList(res.data.Data))
+      .catch(console.error);
+  };
+
+  const fetchTipsData = () => {
+    axios
+      .get('https://generateapi.onrender.com/api/tiPS', {
+        headers: { Authorization: token },
+      })
+      .then((res) => setTipsList(res.data.Data))
+      .catch(console.error);
+  };
+
+  const handleDeleteTips = (id) => {
+    axios
+      .delete(`https://generateapi.onrender.com/api/tiPS/${id}`, {
+        headers: { Authorization: token },
+      })
+      .then(() => fetchTipsData())
+      .catch(console.error);
+  };
+
+  const editData = (id, row) => {
+ setEditTipsId(id);
+    setIni({
+      destinationid: row.destinationid?._id || row.destinationid || '',
+      springTemp: row.springTemp || '',
+      summarTemp: row.summarTemp || '',
+      autumnTemp: row.autumnTemp || '',
+      winterTemp: row.winterTemp || '',
+      currency: row.currency || '',
+      timeDifference: row.timeDifference || '',
+      bestTimetoVisit: row.bestTimetoVisit || '',
+      image: [],
+    });
+  };
+
 
   return (
+   <>
     <AdminLayout>
       <Box
         sx={{
@@ -47,121 +148,173 @@ export default function Tips() {
         <Paper sx={{ background: '#122c3a', p: 3, borderRadius: 2 }}>
           <Formik
             enableReinitialize
-            initialValues={{}} // You can define initial values here
-            onSubmit={(values) => {
-              console.log('Form submitted:', values);
-            }}
+            initialValues={ini}
+            onSubmit={handleSubmit}
           >
-            <Form>
-              <Grid container spacing={2}>
-                {/* Destination Name */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Destination Name"
-                    variant="filled"
-                    InputProps={{
-                      style: { backgroundColor: '#1e3a4c', color: '#fff' },
-                    }}
-                    InputLabelProps={{ style: { color: '#ccc' } }}
-                  />
-                </Grid>
+            {({ values, handleChange, setFieldValue }) => (
+              <Form>
+                <Grid container spacing={2}>
+                  {/* Destination Name */}
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel sx={{ color: '#bbb' }}>Destination</InputLabel>
+                    <Select
+                      name="destinationid"
+                      label="Country Name"
+                      value={values.destinationid}
+                      onChange={handleChange}
+                       sx={{color:'#fff'}}                  >
+                      {destinationList.map((dest) => (
+                        <MenuItem key={dest._id} value={dest._id}>
+                          {dest.destination}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-                {/* Seasons */}
-                {[
-                  { label: 'Spring', icon: <EmojiNature />, id: 'spring' },
-                  { label: 'Summer', icon: <Opacity />, id: 'summer' },
-                  { label: 'Autumn', icon: <WbSunny />, id: 'autumn' },
-                  { label: 'Winter', icon: <AcUnit />, id: 'winter' },
-                ].map((season) => (
-                  <Grid item xs={6} md={3} key={season.id}>
-                    <TextField
-                      fullWidth
-                      label={`${season.label} Temp (°C / °F)`}
-                      variant="filled"
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            {season.icon}
-                          </InputAdornment>
-                        ),
+                  {/* season */}
+
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="springTemp"
+                      label="springTemp"
+                     
+                                           InputProps={{
                         style: { backgroundColor: '#1e3a4c', color: '#fff' },
                       }}
                       InputLabelProps={{ style: { color: '#ccc' } }}
                     />
                   </Grid>
-                ))}
 
-                {/* Currency */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Currency"
-                    variant="filled"
-                    placeholder="Japanese Yen (JPY)"
-                    InputProps={{
-                      style: { backgroundColor: '#1e3a4c', color: '#fff' },
-                    }}
-                    InputLabelProps={{ style: { color: '#ccc' } }}
-                  />
-                </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="summarTemp"
+                      label="summarTemp"
+                     
+                                            InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
 
-                {/* Time Difference */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Time Difference"
-                    variant="filled"
-                    placeholder="London GMT + 9hr"
-                    InputProps={{
-                      style: { backgroundColor: '#1e3a4c', color: '#fff' },
-                    }}
-                    InputLabelProps={{ style: { color: '#ccc' } }}
-                  />
-                </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="autumnTemp"
+                      label="autumnTemp"
+                     
+                                            InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
 
-                {/* Best Time to Visit */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={3}
-                    label="Best Time To Visit"
-                    placeholder="Late spring (March to May) and late autumn (September to November)"
-                    variant="filled"
-                    InputProps={{
-                      style: { backgroundColor: '#1e3a4c', color: '#fff' },
-                    }}
-                    InputLabelProps={{ style: { color: '#ccc' } }}
-                  />
-                </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="winterTemp"
+                      label="winterTemp"
+                     
+                                            InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
 
-                {/* Upload Image */}
-                <Grid item xs={12}>
-                  <Button
-                    component="label"
-                    startIcon={<CloudUpload />}
-                    variant="contained"
-                    sx={{ bgcolor: '#0288d1' }}
-                  >
-                    Upload Image
-                    <input type="file" hidden accept="image/*" />
-                  </Button>
-                </Grid>
+                  {/* Currency */}
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="currency"
+                      label="Currency"
+                     
+                                            InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
 
-                {/* Save Button */}
-                <Grid item xs={12}>
-                  <Button
-                    fullWidth
-                    type="submit"
-                    variant="contained"
-                    sx={{ mt: 2, bgcolor: '#4caf50', fontWeight: 'bold' }}
-                  >
-                    SAVE TRAVEL TIPS
-                  </Button>
+                  {/* Time Difference */}
+                  <Grid item xs={12} md={6}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="timeDifference"
+                      label="Time Difference"
+                     
+                      placeholder="London GMT + 9hr"
+                      InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
+
+                  {/* Best Time to Visit */}
+                  <Grid item xs={12}>
+                    <Field
+                      as={TextField}
+                      fullwidth
+                      name="bestTimetoVisit"
+                      multiline
+                      rows={3}
+                      label="bestTimetoVisit"
+                      placeholder="Late spring (March to May) and late autumn (September to November)"
+                     
+                      InputProps={{
+                        style: { backgroundColor: '#1e3a4c', color: '#fff' },
+                      }}
+                      InputLabelProps={{ style: { color: '#ccc' } }}
+                    />
+                  </Grid>
+
+                  {/* Upload Image */}
+                  <Grid item xs={12}>
+                    <Button
+                      component="label"
+                      startIcon={<CloudUpload />}
+                      variant="contained"
+                      sx={{ bgcolor: '#0288d1' }}
+                    >
+                      Upload Image
+                      <input
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                        multiple
+                        hidden
+                        onChange={(e) => {
+                          setFieldValue('image', Array.from(e.target.files));
+                        }}
+                      />
+                    </Button>
+                  </Grid>
+
+                  {/* Save Button */}
+                  <Grid item xs={12}>
+                    <Button
+                      fullwidth
+                      name="springTemp"
+                      type="submit"
+                      variant="contained"
+                      sx={{ mt: 2, bgcolor: '#4caf50', fontWeight: 'bold' }}
+                    >
+                      SAVE TRAVEL TIPS
+                    </Button>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Form>
+              </Form>
+            )}
           </Formik>
         </Paper>
       </Box>
@@ -179,7 +332,7 @@ export default function Tips() {
         <Table sx={{ minWidth: 650 }} aria-label="destination table">
           <TableHead>
             <TableRow>
-              {['Destination Name', 'Spring Temp','Summar Temp','Autumn Temp','Winter Temp','Currency','Time Difference','Best Timeto Visit','Image',, 'Update', 'Delete'].map(
+              {['Destination Name', 'Spring Temp', 'Summar Temp', 'Autumn Temp', 'Winter Temp', 'Currency', 'Time Difference', 'Best Timeto Visit', 'Image','Update', 'Delete'].map(
                 (head) => (
                   <TableCell
                     key={head}
@@ -199,27 +352,45 @@ export default function Tips() {
           </TableHead>
 
           <TableBody>
-            {Array.isArray(list) && list.length > 0 ? (
-              list.map((row) => (
+            {Array.isArray(tipsList) && tipsList.length > 0 ? (
+              tipsList.map((row) => (
                 <TableRow
                   key={row._id}
                   sx={{
                     '&:hover': {
                       backgroundColor: '#203a43',
                     },
-                  }}
-                >
-                  <TableCell
-                    align="center"
-                    sx={{ color: '#E0E0E0', fontSize: '15px' }}
-                  >
-                    {row.destination}
+                  }}>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.destinationid.destination}
                   </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{ color: '#E0E0E0', fontSize: '15px' }}
-                  >
-                    ₹{row.packagePrice}
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.springTemp}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.summarTemp}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.autumnTemp}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.winterTemp}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.currency}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.timeDifference}
+                  </TableCell>
+                  <TableCell align="center" sx={{ color: '#E0E0E0' }}>
+                    {row.bestTimetoVisit}
+                  </TableCell>
+                  <TableCell align="center">
+                    {row.image ? (<img
+                      src={row.image}
+                      alt="dest"
+                      style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 4 }}
+                    />) : ('No image')}
                   </TableCell>
                   <TableCell align="center">
                     <Button
@@ -236,6 +407,7 @@ export default function Tips() {
                           borderColor: '#90caf9',
                         },
                       }}
+                      onClick={() => editData(row._id, row)}
                     >
                       Update
                     </Button>
@@ -255,7 +427,7 @@ export default function Tips() {
                           borderColor: '#ef5350',
                         },
                       }}
-                      // onClick={() => deleteData(row._id)}
+                      onClick={() => handleDeleteTips(row._id)}
                     >
                       Delete
                     </Button>
@@ -277,5 +449,6 @@ export default function Tips() {
         </Table>
       </TableContainer>
     </AdminLayout>
+   </>
   );
 }

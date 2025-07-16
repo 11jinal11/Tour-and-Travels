@@ -17,7 +17,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Navbar from "../componants/Navbar";
-import bgimg from "../img/planimg3.jpg"
+import bgimg from "../img/contactpage.jpg"
 
 export default function ContactPage() {
   const theme = useTheme();
@@ -94,10 +94,10 @@ export default function ContactPage() {
         <Grid item xs={12} md={6} sx={{ display: 'flex', width: '45%' }}>
       <Box my="auto">
         <Typography variant="h4" color="primary" gutterBottom>
-          Bout India
+         Wonderlust Travel
         </Typography>
         <Typography variant="body1" paragraph>
-          A boutique tour company offering completely customized, bespoke trips to India & southeast Asia.
+          A  Wonderlust Travel tour company offering completely customized, bespoke trips to India & All over World.
         </Typography>
 
         {/* Phone Information */}
@@ -107,7 +107,7 @@ export default function ContactPage() {
             <Typography variant="subtitle1" fontWeight="bold">
               Call / <span style={{ color: "green" }}>WhatsApp</span>
             </Typography>
-            <Typography variant="h6">+91 85599-55333</Typography>
+            <Typography variant="h6">+91 88499-20736</Typography>
           </Box>
         </Box>
 
@@ -118,7 +118,7 @@ export default function ContactPage() {
             <Typography variant="subtitle1" fontWeight="bold">
               Email Info
             </Typography>
-            <Typography>info@boutindia.com</Typography>
+            <Typography>wonderlusttravel@gmail.com</Typography>
           </Box>
         </Box>
 
@@ -130,8 +130,8 @@ export default function ContactPage() {
               INDIA
             </Typography>
             <Typography>
-              1st floor, 213 A, Lions Ln W, Panchyawala, Jaipur,<br />
-              Rajasthan, India - 302034
+              1st floor, 213 A, Kedar Business Hub,bapasitaram chowk,<br/>
+              Surat, India - 395004
             </Typography>
           </Box>
         </Box>
